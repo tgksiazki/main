@@ -1,0 +1,52 @@
+To collect AWS metrics via Python, you can use the Boto3 library, which is the official AWS SDK for Python. The following script provides a simple example of how you can gather the metrics you're looking for:
+
+Please replace "ACCESS_KEY_ID", "SECRET_ACCESS_KEY" and "REGION_NAME" with your own AWS access key, secret access key and region name.
+
+python
+Copy code
+import boto3
+
+# AWS access details
+aws_access_key_id = "ACCESS_KEY_ID"
+aws_secret_access_key = "SECRET_ACCESS_KEY"
+region_name = "us-west-1"
+
+# Boto3 client
+ec2 = boto3.client(
+    "ec2",
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key,
+    region_name=region_name,
+)
+
+# Metrics dictionary
+metrics = {"UnattachedVolumes": 0, "NonEncryptedVolumes": 0, "NonEncryptedSnapshots": 0}
+
+# Get all volumes
+volumes = ec2.describe_volumes()["Volumes"]
+
+# Iterate over volumes
+for volume in volumes:
+    # Check for unattached volumes
+    if len(volume["Attachments"]) == 0:
+        metrics["UnattachedVolumes"] += 1
+
+    # Check for non-encrypted volumes
+    if not volume["Encrypted"]:
+        metrics["NonEncryptedVolumes"] += 1
+
+# Get all snapshots
+snapshots = ec2.describe_snapshots(OwnerIds=["self"])["Snapshots"]
+
+# Iterate over snapshots
+for snapshot in snapshots:
+    # Check for non-encrypted snapshots
+    if not snapshot["Encrypted"]:
+        metrics["NonEncryptedSnapshots"] += 1
+
+print(metrics)
+This script collects metrics on the number of unattached volumes, non-encrypted volumes, and non-encrypted snapshots in the specified AWS region. Note that the AWS SDK can only see the resources that the provided AWS credentials have access to.
+
+This script is a simple demonstration and lacks error checking and logging. You may want to add these and other features if you are using the script for real-world tasks.
+
+Also, remember that it is advisable not to hard code AWS credentials in your code. You should use IAM roles if running on EC2 instances, or environment variables if running on your local machine. This is just an example to illustrate how you can collect the metrics. Always follow security best practices for handling AWS credentials.
